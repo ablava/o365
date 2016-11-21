@@ -604,14 +604,13 @@ def findUser(upn):
         conn.request("GET", "/" + O365DOMAIN + "/users/" + upn + "?" 
                         + params, "", headers)
         response = conn.getresponse()
-
+        conn.close()
+        
         # Check if the user does not exist
         if response.status != 200:
             logging.info("user {0} does not exist in o365".format(upn))
             return False
-            
-        conn.close()
-
+        
     except Exception as e:
         print("ERROR: problem with user search in O365: {0}".format(e))
         logging.error("problem searching for {0} in O365: {1}".format(upn,e))
