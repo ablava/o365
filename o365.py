@@ -256,6 +256,9 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
             # Close earlier connection
             conn.close()
             
+            # Wait 5s for user to be fully created
+            time.sleep(5)
+            
             # Determine licenses based on user type
             userType = getUserType(username)
             
