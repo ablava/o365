@@ -231,7 +231,7 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
             "mailNickname": username,
             "department": ou,
             "immutableId": UDCid,
-            "passwordProfile": {"password": userPassword + "!", 
+            "passwordProfile": {"password": userPassword, 
                                 "forceChangePasswordNextLogin": "false"},
             "passwordPolicies": "DisablePasswordExpiration",
             "usageLocation": "US"
