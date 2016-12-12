@@ -231,7 +231,7 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
             "mailNickname": username,
             "department": ou,
             "immutableId": UDCid,
-            "passwordProfile": {"password": userPassword, 
+            "passwordProfile": {"password": userPassword + "!", 
                                 "forceChangePasswordNextLogin": "false"},
             "passwordPolicies": "DisablePasswordExpiration",
             "usageLocation": "US"
@@ -252,13 +252,7 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
             print("ERROR: User {0} could not be added to o365" \
                         .format(username))
             result = "ERROR: user could not be created in o365."
-        else:
-            # Close earlier connection
-            conn.close()
-            
-            # Wait 10s for user to be fully created
-            time.sleep(10)
-            
+        else:                
             # Determine licenses based on user type
             userType = getUserType(username)
             
@@ -277,25 +271,34 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
             
             data = json.dumps(body)
             
-            conn = httplib.HTTPSConnection('graph.windows.net')
-            conn.request("POST", "/" + O365DOMAIN + "/users/" + upn 
-                            + "/assignLicense?" + params, data, headers)
-            response = conn.getresponse()
-            
-            if response.status != 200:
-                # User was created with no licenses
-                logging.error("user did not get licenses in o365: {0}" \
-                        .format(username))
-                print("ERROR: User {0} did not get licenses in o365" \
-                        .format(username))
-                result = "SUCCESS: user added but with no licenses in o365."
-            else:
-                # Log user creation
-                logging.info("user added to o365: {0}".format(username))
-                print("SUCCESS: User {0} added to o365".format(username))
-                result = "SUCCESS: user was created in o365."
-            
-        conn.close()
+            count = 0
+            while count < 4:
+                # commented out to re-use existing TCP connection
+                # conn = httplib.HTTPSConnection('graph.windows.net')
+                conn.request("POST", "/" + O365DOMAIN + "/users/" + upn 
+                                + "/assignLicense?" + params, data, headers)
+                response = conn.getresponse()
+                
+                if response.status != 200:
+                    count += 1
+                    # User was created with no licenses
+                    logging.error("user did not get licenses in o365: {0} " \
+                            "- re-try {1} in 5s".format(username, count))
+                    print("ERROR: User {0} did not get licenses in o365 " \
+                            "- re-try {1} in 5s".format(username, count))
+                    result = "SUCCESS: user added but with no licenses in o365."
+                    # Wait 5s for user to be fully created
+                    time.sleep(5)
+                    
+                else:
+                    count = 4
+                    # Log user creation
+                    logging.info("user added to o365: {0}".format(username))
+                    print("SUCCESS: User {0} added to o365".format(username))
+                    result = "SUCCESS: user was created in o365."
+                    
+            # close the TCP connection
+            conn.close()
         
     except Exception as e:
         print("ERROR: Could not add user to o365: {0}".format(e))
@@ -614,7 +617,7 @@ def findUser(upn):
         if response.status != 200:
             logging.info("user {0} does not exist in o365".format(upn))
             return False
-        
+
     except Exception as e:
         print("ERROR: problem with user search in O365: {0}".format(e))
         logging.error("problem searching for {0} in O365: {1}".format(upn,e))
