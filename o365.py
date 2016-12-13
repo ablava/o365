@@ -213,7 +213,8 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
         # Set the bearer auth header
         headers = {
             'Authorization': 'Bearer ' + access_token,
-            'Content-Type': 'application/json; charset=utf-8'
+            'Content-Type': 'application/json; charset=utf-8',
+            'Connection': 'keep-alive'
         }
         
         # Set the required params
@@ -244,6 +245,7 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
         conn.request("POST", "/" + O365DOMAIN + "/users?" 
                         + params, data, headers)
         response = conn.getresponse()
+        response.read()
         
         if response.status != 201:
             # User was not created
@@ -278,6 +280,7 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
                 conn.request("POST", "/" + O365DOMAIN + "/users/" + upn 
                                 + "/assignLicense?" + params, data, headers)
                 response = conn.getresponse()
+                response.read()
                 
                 if response.status != 200:
                     count += 1
@@ -289,7 +292,6 @@ def create(username, loginDisabled, UDCid, givenName, fullName, sn, ou,
                     result = "SUCCESS: user added but with no licenses in o365."
                     # Wait 5s for user to be fully created
                     time.sleep(5)
-                    
                 else:
                     count = 4
                     # Log user creation
