@@ -362,7 +362,9 @@ def update(username, newusername, loginDisabled, givenName, fullName, sn, ou):
                             .format(newusername))
             result = "ERROR: username already taken!"
             return result
-            
+    else:
+        newupn = upn
+        
     # Rename, update attributes or disable
     try:
         # Set the bearer auth header
