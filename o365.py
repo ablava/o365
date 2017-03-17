@@ -26,7 +26,7 @@ with these 10 required data fields:
             "username": "testuserj",
             "newusername": "testuserj",
             "loginDisabled": "False",
-            "UDCid": 1554943643675475475437,
+            "UDCid": "1554943643675475475437",
             "givenName": "John",
             "fullName": "John The Testuser",
             "sn": "Testuser",
