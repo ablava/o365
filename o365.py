@@ -35,7 +35,7 @@ with these 10 required data fields:
         }
     ] 
 }
-where action can be create/update/delete and newusername is same old one 
+where action can be create/update/delete/list and newusername is same old one 
 or a new value if renaming the user.
 
 Note that this script only deletes users and it cannot purge/restore 
@@ -139,6 +139,8 @@ def main(argv):
                                 str(row["sn"]), str(row["primO"]))
             elif row["action"] == 'delete':
                  result = delete(str(row["username"]))
+            elif row["action"] == 'list':
+                 result = list()
             else:
                 print("ERROR: unrecognized action: {0}".format(row["action"]))
                 logging.error("unrecognized action: {0}".format(row["action"]))
@@ -491,6 +493,78 @@ def delete(username):
         logging.error("unknown error while deleting user {0}: {1}" \
                         .format(username,e))
         result = "ERROR: Could not delete o365 user."
+    
+    return result
+
+
+def list():
+    """This function lists all users in O365"""
+
+    # Get the Graph API access_token and
+    # Catch any MSFT login failures
+    if not ACCESS_TOKEN:
+        graphConnect()
+        if not ACCESS_TOKEN:
+            result = "ERROR: unable to authenticate to MSFT login service."
+            return result
+    
+    access_token = ACCESS_TOKEN
+    
+    # Get the list of all users in O365 sorted by username
+    try:
+         # Build bearer auth header
+        headers = {
+            'Authorization': 'Bearer ' + access_token,
+            'Content-Type': 'application/json'
+        }
+        
+        # Can add optional filters, like '$filter': 'accountEnabled eq false'
+        params = urllib.urlencode({
+            'api-version': API_VERSION,
+            '$top': '999'
+        })
+        
+        # Connect to Graph API
+        conn = httplib.HTTPSConnection('graph.windows.net')
+
+        # Need to check if we need to get next page of results
+        skipToken = '1'
+        
+        while skipToken:
+            if skipToken == '1':
+                conn.request("GET", "/" + O365DOMAIN + "/users" + "?" 
+                            + params, "", headers)
+            else:
+                conn.request("GET", "/" + O365DOMAIN + "/" + skipToken 
+                            + "&" + params, "", headers)
+
+            response = conn.getresponse()
+            
+            if response.status != 200:
+                logging.error("did not get list of o365 users")
+                print("ERROR: did not get list of o365 users")
+                result = "ERROR: id not get list of o365 users."
+                break
+            else:
+                data = response.read()
+                jsondata = json.loads(data)
+                for userPrincipal in jsondata['value']:
+                    print(userPrincipal['userPrincipalName'])
+                if 'odata.nextLink' not in jsondata:
+                    skipToken = ''
+                else:
+                    skipToken = jsondata['odata.nextLink']
+          
+            logging.info("got the list of o365users")
+            #print("SUCCESS: Got the list of o365 users")
+            result = "SUCCESS: got the list of o365 users."
+            
+        conn.close()
+
+    except Exception as e:
+        print("ERROR: unknown error while getting the list of o365 users")
+        logging.error("unknown error while getting the list of o365 users")
+        result = "ERROR: Could not get the list of o365 users."
     
     return result
 
