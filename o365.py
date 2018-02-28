@@ -543,7 +543,7 @@ def list():
             if response.status != 200:
                 logging.error("did not get list of o365 users")
                 print("ERROR: did not get list of o365 users")
-                result = "ERROR: id not get list of o365 users."
+                result = "ERROR: did not get list of o365 users."
                 break
             else:
                 data = response.read()
@@ -555,7 +555,7 @@ def list():
                 else:
                     skipToken = jsondata['odata.nextLink']
           
-            logging.info("got the list of o365users")
+            logging.info("got the list of o365 users")
             #print("SUCCESS: Got the list of o365 users")
             result = "SUCCESS: got the list of o365 users."
             
